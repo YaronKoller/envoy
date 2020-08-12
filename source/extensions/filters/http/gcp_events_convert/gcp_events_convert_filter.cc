@@ -118,20 +118,24 @@ absl::Status GcpEventsConvertFilter::updateHeader() {
   // TODO(#3): implement detail logic for update Header
 =======
 bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers) {
-  absl::string_view  content_type = headers.getContentTypeValue();
-  return content_type == matchContentType();
+  return headers.getContentTypeValue() == matchContentType();
 }
 
 absl::Status GcpEventsConvertFilter::updateHeader() {
+<<<<<<< HEAD
 <<<<<<< HEAD
   request_headers_->addCopy(headerKey(), headerValue());
 >>>>>>> 94456147a... rebase logic with master
 =======
 >>>>>>> e0a9644dd... update proto file which will now have content_type
+=======
+  // TODO(h9jiang): implement detail logic for update Header
+>>>>>>> ee8599eeb... fix small issues
   return absl::OkStatus();
 }
 
 absl::Status GcpEventsConvertFilter::updateBody() {
+<<<<<<< HEAD
 <<<<<<< HEAD
   decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
     // TODO(#3): implement detail logic for update Body
@@ -144,6 +148,10 @@ absl::Status GcpEventsConvertFilter::updateBody() {
 =======
     decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
       // create a new buffer instance  
+=======
+    decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) { 
+      // TODO(h9jiang): implement detail logic for update Body
+>>>>>>> ee8599eeb... fix small issues
       Buffer::OwnedImpl new_buffer;
       new_buffer.add("This is a example body");
       // drain the current buffered instance
