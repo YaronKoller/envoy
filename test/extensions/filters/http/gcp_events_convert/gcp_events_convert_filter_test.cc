@@ -7,8 +7,6 @@
 #include "common/protobuf/utility.h"
 #include "common/runtime/runtime_impl.h"
 
-#include "google/pubsub/v1/pubsub.pb.h"
-
 #include "extensions/filters/http/gcp_events_convert/gcp_events_convert_filter.h"
 #include "extensions/filters/http/well_known_names.h"
 

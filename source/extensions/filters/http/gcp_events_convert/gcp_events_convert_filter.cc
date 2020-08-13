@@ -137,6 +137,7 @@ absl::Status GcpEventsConvertFilter::updateHeader() {
 absl::Status GcpEventsConvertFilter::updateBody() {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
     // TODO(#3): implement detail logic for update Body
     // drain the current buffered instance
@@ -161,6 +162,18 @@ absl::Status GcpEventsConvertFilter::updateBody() {
     });
     return absl::OkStatus();
 >>>>>>> 94456147a... rebase logic with master
+=======
+  decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
+    // TODO(h9jiang): implement detail logic for update Body
+    Buffer::OwnedImpl new_buffer;
+    new_buffer.add("This is a example body");
+    // drain the current buffered instance
+    buffered.drain(buffered.length());
+    // replace the current buffered instance with the new buffer instance
+    buffered.move(new_buffer);
+  });
+  return absl::OkStatus();
+>>>>>>> 5d20f6aa7... Run envoy formatting script
 }
 
 } // namespace GcpEventsConvert
