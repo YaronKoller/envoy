@@ -259,6 +259,23 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         use_category = ["dataplane"],
         cpe = "N/A",
     ),
+    boost = dict(
+        sha256 = "d73a8da01e8bf8c7eda40b4c84915071a8c8a0df4a6734537ddde4a8580524ee",
+        strip_prefix = "boost_1_71_0",
+        urls = [                
+            "https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.bz2",
+            # "https://mirror.bazel.build/dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.bz2",
+        ],
+        use_category = ["dataplane"],
+        cpe = "N/A",
+    ),
+    com_github_nelhage_rules_boost = dict(
+        sha256 = "f8c9653c1c49489c04f9f87ab1ee93d7b59bb26a39d9e30e9687fca3c6197c3f",
+        strip_prefix = "rules_boost-9f9fb8b2f0213989247c9d5c0e814a8451d18d7f",
+        urls = ["https://github.com/nelhage/rules_boost/archive/9f9fb8b2f0213989247c9d5c0e814a8451d18d7f.tar.gz"],
+        use_category = ["dataplane"],
+        cpe = "N/A",
+    ),
     com_github_nghttp2_nghttp2 = dict(
         project_name = "Nghttp2",
         project_url = "https://nghttp2.org",
