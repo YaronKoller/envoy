@@ -175,6 +175,7 @@ def envoy_dependencies(skip_targets = []):
     _com_github_libevent_libevent()
     _com_github_luajit_luajit()
     _com_github_moonjit_moonjit()
+    _com_github_nelhage_rules_boost()
     _com_github_nghttp2_nghttp2()
     _com_github_nodejs_http_parser()
     _com_github_tencent_rapidjson()
@@ -198,6 +199,7 @@ def envoy_dependencies(skip_targets = []):
     _repository_impl("envoy_build_tools")
     _repository_impl("rules_cc")
     _org_unicode_icuuc()
+    _boost()
 
     # Unconditional, since we use this only for compiler-agnostic fuzzing utils.
     _org_llvm_releases_compiler_rt()
@@ -378,6 +380,15 @@ def _net_zlib():
 
 def _com_google_cel_cpp():
     _repository_impl("com_google_cel_cpp")
+
+def _com_github_nelhage_rules_boost():
+    _repository_impl("com_github_nelhage_rules_boost")
+
+def _boost():
+    _repository_impl(
+        name = "boost",
+        build_file = "@com_github_nelhage_rules_boost//:BUILD.boost",
+    )
 
 def _com_github_nghttp2_nghttp2():
     location = _get_location("com_github_nghttp2_nghttp2")
