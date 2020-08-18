@@ -41,10 +41,14 @@ struct DispatcherStats {
   ALL_DISPATCHER_STATS(GENERATE_HISTOGRAM_STRUCT)
 };
 
+using DispatcherStatsPtr = std::unique_ptr<DispatcherStats>;
+
 /**
  * Callback invoked when a dispatcher post() runs.
  */
 using PostCb = std::function<void()>;
+
+using PostCbSharedPtr = std::shared_ptr<PostCb>;
 
 /**
  * Abstract event dispatching loop.
@@ -144,11 +148,12 @@ public:
    * @param socket supplies the socket to listen on.
    * @param cb supplies the callbacks to invoke for listener events.
    * @param bind_to_port controls whether the listener binds to a transport port or not.
+   * @param backlog_size controls listener pending connections backlog
    * @return Network::ListenerPtr a new listener that is owned by the caller.
    */
   virtual Network::ListenerPtr createListener(Network::SocketSharedPtr&& socket,
-                                              Network::ListenerCallbacks& cb,
-                                              bool bind_to_port) PURE;
+                                              Network::ListenerCallbacks& cb, bool bind_to_port,
+                                              uint32_t backlog_size) PURE;
 
   /**
    * Creates a logical udp listener on a specific port.

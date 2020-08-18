@@ -3,7 +3,7 @@
 
 #include "test/extensions/filters/http/tap/common.h"
 #include "test/mocks/http/mocks.h"
-#include "test/mocks/server/mocks.h"
+#include "test/mocks/server/factory_context.h"
 #include "test/mocks/stream_info/mocks.h"
 #include "test/test_common/utility.h"
 
@@ -133,7 +133,7 @@ TEST(TapFilterConfigTest, InvalidProto) {
       R"EOF(
   common_config:
     static_config:
-      match_config:
+      match:
         any_match: true
       output_config:
         sinks:
@@ -148,6 +148,29 @@ TEST(TapFilterConfigTest, InvalidProto) {
   EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(config, "stats", context),
                             EnvoyException,
                             "Error: Specifying admin streaming output without configuring admin.");
+}
+
+TEST(TapFilterConfigTest, NeitherMatchNorMatchConfig) {
+  const std::string filter_config =
+      R"EOF(
+  common_config:
+    static_config:
+      output_config:
+        sinks:
+          - format: PROTO_BINARY
+            file_per_tap:
+              path_prefix: abc
+)EOF";
+
+  envoy::extensions::filters::http::tap::v3::Tap config;
+  TestUtility::loadFromYaml(filter_config, config);
+  NiceMock<Server::Configuration::MockFactoryContext> context;
+  TapFilterFactory factory;
+
+  EXPECT_THROW_WITH_MESSAGE(factory.createFilterFactoryFromProto(config, "stats", context),
+                            EnvoyException,
+                            fmt::format("Neither match nor match_config is set in TapConfig: {}",
+                                        config.common_config().static_config().DebugString()));
 }
 
 } // namespace

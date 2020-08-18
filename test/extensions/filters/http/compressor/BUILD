@@ -32,7 +32,6 @@ envoy_extension_cc_test(
         "compressor_filter_integration_test.cc",
     ],
     extension_name = "envoy.filters.http.compressor",
-    tags = ["fails_on_windows"],
     deps = [
         "//source/extensions/compression/gzip/compressor:config",
         "//source/extensions/compression/gzip/decompressor:config",
@@ -58,7 +57,7 @@ envoy_extension_cc_test(
         ":mock_config_cc_proto",
         "//source/extensions/filters/http/compressor:config",
         "//test/mocks/runtime:runtime_mocks",
-        "//test/mocks/server:server_mocks",
+        "//test/mocks/server:factory_context_mocks",
         "//test/test_common:utility_lib",
     ],
 )
