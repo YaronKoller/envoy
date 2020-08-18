@@ -8,6 +8,7 @@ load("@upb//bazel:repository_defs.bzl", upb_bazel_version_repository = "bazel_ve
 load("@config_validation_pip3//:requirements.bzl", config_validation_pip_install = "pip_install")
 load("@protodoc_pip3//:requirements.bzl", protodoc_pip_install = "pip_install")
 load("@rules_antlr//antlr:deps.bzl", "antlr_dependencies")
+load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
 
 # go version for rules_go
 GO_VERSION = "1.14.7"
@@ -53,3 +54,5 @@ def envoy_dependency_imports(go_version = GO_VERSION):
 
     config_validation_pip_install()
     protodoc_pip_install()
+    boost_deps()
+    
