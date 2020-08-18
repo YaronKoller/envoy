@@ -26,8 +26,8 @@ envoy_cc_library(
         "//source/common/stats:symbol_table_lib",
         "//source/extensions/filters/http:well_known_names",
         "//source/extensions/filters/http/common:pass_through_filter_lib",
-        "@com_google_googleapis//google/pubsub/v1:pubsub_cc_proto",
         "@boost//:beast",
+        "@com_google_googleapis//google/pubsub/v1:pubsub_cc_proto",
         "@envoy_api//envoy/extensions/filters/http/gcp_events_convert/v3:pkg_cc_proto",
     ],
 )
