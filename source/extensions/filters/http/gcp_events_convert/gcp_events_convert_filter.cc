@@ -85,6 +85,14 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
   }
 
   // TODO(#3): Use Cloud Event SDK to convert Pubsub Message to HTTP Binding
+  // example output SDK
+  HttpRequest http_req;
+  http_req.base().set("content-type", "application/text");
+  http_req.base().set("ce-specversion", "1.0");
+  http_req.base().set("ce-type", "com.example.some_event");
+  http_req.base().set("ce-time", "2020-03-10T03:56:24Z");
+  http_req.body() = "certain body string text";
+  
   absl::Status update_status = updateHeader();
   if (!update_status.ok()) {
     ENVOY_LOG(warn, "Gcp Events Convert Filter log: update header {}", update_status.ToString());
@@ -113,18 +121,28 @@ bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers)
   return headers.getContentTypeValue() == config_->content_type_;
 }
 
-absl::Status GcpEventsConvertFilter::updateHeader() {
+absl::Status GcpEventsConvertFilter::updateHeader(const HttpRequest& http_req) {
   // TODO(#3): implement detail logic for update Header
+  for (auto it = http_req.base().begin() ; it != http_req.base().end() ; ++it) {
+    Http::LowerCaseString header_key((*it).name_string().to_string());
+    std::string header_val = (*it).value().to_string();
+    std::cout << header_key.get() << " " << header_val << std::endl;
+    if (header_key == Http::LowerCaseString("content_type")) {
+      request_headers_->setContentType(header_val);
+    } else {
+      request_headers_->addCopy(header_key, header_val);
+    }
+  }
   return absl::OkStatus();
 }
 
-absl::Status GcpEventsConvertFilter::updateBody() {
-  decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
+absl::Status GcpEventsConvertFilter::updateBody(HttpRequest& http_req) {
+  decoder_callbacks_->modifyDecodingBuffer([&http_req](Buffer::Instance& buffered) {
     // TODO(#3): implement detail logic for update Body
     // drain the current buffered instance
     buffered.drain(buffered.length());
     // replace the current buffered instance with the new body
-    buffered.add("This is a example body");
+    buffered.add(http_req.body());
   });
   return absl::OkStatus();
 }

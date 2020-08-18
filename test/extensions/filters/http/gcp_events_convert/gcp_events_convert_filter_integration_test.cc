@@ -92,7 +92,7 @@ TEST_P(GcpEventsConvertIntegrationTest, CloudEventNormalRequest) {
   ASSERT_TRUE(request_stream->waitForEndStream(*dispatcher_));
   response->waitForEndStream();
   // filter should replace body with given string
-  ASSERT_EQ(request_stream->body().toString(), "This is a example body");
+  ASSERT_EQ(request_stream->body().toString(), "certain body string text");
   codec_client->close();
 }
 

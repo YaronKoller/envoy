@@ -5,10 +5,6 @@ load(
     "envoy_package",
 )
 
-# load("@com_github_nelhage_rules_boost//:boost/boost.bzl", "boost_deps")
-
-# boost_deps()
-
 licenses(["notice"])  # Apache 2
 
 envoy_package()

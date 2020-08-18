@@ -8,10 +8,14 @@
 
 #include "common/common/logger.h"
 
+#include <boost/beast/http.hpp>
+
 namespace Envoy {
 namespace Extensions {
 namespace HttpFilters {
 namespace GcpEventsConvert {
+
+typedef boost::beast::http::request<boost::beast::http::string_body> HttpRequest;
 
 struct GcpEventsConvertFilterConfig : public Router::RouteSpecificFilterConfig {
   GcpEventsConvertFilterConfig(
@@ -49,13 +53,13 @@ private:
   // modify the data of HTTP request
   // 1. drain buffered data
   // 2. write cloud event data
-  absl::Status updateBody();
+  absl::Status updateBody(HttpRequest& request);
 
   // modify the header of HTTP request
   // 1. replace header's content type with ce-datacontenttype
   // 2. add cloud event information, ce-version, ce-type...... (except ce's data)
   // 3. [TBD] add Ack ID into header
-  absl::Status updateHeader();
+  absl::Status updateHeader(const HttpRequest& request);
 
   Http::RequestHeaderMap* request_headers_ = nullptr;
   bool has_cloud_event_ = false;
