@@ -45,7 +45,7 @@ Http::FilterHeadersStatus GcpEventsConvertFilter::decodeHeaders(Http::RequestHea
     // we don't need to do any buffering
     return Http::FilterHeadersStatus::Continue;
   }
-
+  
   has_cloud_event_ = true;
   // store the current header for future usage
   request_headers_ = &headers;
@@ -85,7 +85,7 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
   }
 
   // TODO(#3): Use Cloud Event SDK to convert Pubsub Message to HTTP Binding
-  // example output SDK
+  // HttpRequest http_req = Binder.bind(cloudevents);
   HttpRequest http_req;
   http_req.base().set("content-type", "application/text");
   http_req.base().set("ce-specversion", "1.0");
@@ -93,13 +93,13 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
   http_req.base().set("ce-time", "2020-03-10T03:56:24Z");
   http_req.body() = "certain body string text";
   
-  absl::Status update_status = updateHeader();
+  absl::Status update_status = updateHeader(http_req);
   if (!update_status.ok()) {
     ENVOY_LOG(warn, "Gcp Events Convert Filter log: update header {}", update_status.ToString());
     return Http::FilterDataStatus::Continue;
   }
 
-  update_status = updateBody();
+  update_status = updateBody(http_req);
   if (!update_status.ok()) {
     ENVOY_LOG(warn, "Gcp Events Convert Filter log: update body {}", update_status.ToString());
     return Http::FilterDataStatus::Continue;
@@ -123,7 +123,15 @@ bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers)
 
 absl::Status GcpEventsConvertFilter::updateHeader(const HttpRequest& http_req) {
   // TODO(#3): implement detail logic for update Header
-  request_headers_->addCopy(headerKey(), headerValue());
+  for (auto it = http_req.base().begin() ; it != http_req.base().end() ; ++it) {
+    Http::LowerCaseString header_key((*it).name_string().to_string());
+    std::string header_val = (*it).value().to_string();
+    if (header_key == Http::LowerCaseString("content-type")) {
+      request_headers_->setContentType(header_val);
+    } else {
+      request_headers_->addCopy(header_key, header_val);
+    }
+  }
   return absl::OkStatus();
 }
 
