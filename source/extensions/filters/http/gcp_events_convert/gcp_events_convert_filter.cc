@@ -85,6 +85,14 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
   }
 
   // TODO(#3): Use Cloud Event SDK to convert Pubsub Message to HTTP Binding
+  // example output SDK
+  HttpRequest http_req;
+  http_req.base().set("content-type", "application/text");
+  http_req.base().set("ce-specversion", "1.0");
+  http_req.base().set("ce-type", "com.example.some_event");
+  http_req.base().set("ce-time", "2020-03-10T03:56:24Z");
+  http_req.body() = "certain body string text";
+  
   absl::Status update_status = updateHeader();
   if (!update_status.ok()) {
     ENVOY_LOG(warn, "Gcp Events Convert Filter log: update header {}", update_status.ToString());
@@ -109,71 +117,24 @@ void GcpEventsConvertFilter::setDecoderFilterCallbacks(
   decoder_callbacks_ = &callbacks;
 }
 
-<<<<<<< HEAD
 bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers) const {
   return headers.getContentTypeValue() == config_->content_type_;
 }
 
-absl::Status GcpEventsConvertFilter::updateHeader() {
+absl::Status GcpEventsConvertFilter::updateHeader(const HttpRequest& http_req) {
   // TODO(#3): implement detail logic for update Header
-=======
-bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers) {
-  return headers.getContentTypeValue() == matchContentType();
-}
-
-absl::Status GcpEventsConvertFilter::updateHeader() {
-<<<<<<< HEAD
-<<<<<<< HEAD
   request_headers_->addCopy(headerKey(), headerValue());
->>>>>>> 94456147a... rebase logic with master
-=======
->>>>>>> e0a9644dd... update proto file which will now have content_type
-=======
-  // TODO(h9jiang): implement detail logic for update Header
->>>>>>> ee8599eeb... fix small issues
   return absl::OkStatus();
 }
 
-absl::Status GcpEventsConvertFilter::updateBody() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-  decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
-    // TODO(#3): implement detail logic for update Body
+absl::Status GcpEventsConvertFilter::updateBody(HttpRequest& http_req) {
+  decoder_callbacks_->modifyDecodingBuffer([&http_req](Buffer::Instance& buffered) {
     // drain the current buffered instance
     buffered.drain(buffered.length());
     // replace the current buffered instance with the new body
-    buffered.add("This is a example body");
+    buffered.add(http_req.body());
   });
   return absl::OkStatus();
-=======
-    decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
-      // create a new buffer instance  
-=======
-    decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) { 
-      // TODO(h9jiang): implement detail logic for update Body
->>>>>>> ee8599eeb... fix small issues
-      Buffer::OwnedImpl new_buffer;
-      new_buffer.add("This is a example body");
-      // drain the current buffered instance
-      buffered.drain(buffered.length());
-      // replace the current buffered instance with buffer instance just created
-      buffered.move(new_buffer);
-    });
-    return absl::OkStatus();
->>>>>>> 94456147a... rebase logic with master
-=======
-  decoder_callbacks_->modifyDecodingBuffer([](Buffer::Instance& buffered) {
-    // TODO(h9jiang): implement detail logic for update Body
-    Buffer::OwnedImpl new_buffer;
-    new_buffer.add("This is a example body");
-    // drain the current buffered instance
-    buffered.drain(buffered.length());
-    // replace the current buffered instance with the new buffer instance
-    buffered.move(new_buffer);
-  });
-  return absl::OkStatus();
->>>>>>> 5d20f6aa7... Run envoy formatting script
 }
 
 } // namespace GcpEventsConvert
