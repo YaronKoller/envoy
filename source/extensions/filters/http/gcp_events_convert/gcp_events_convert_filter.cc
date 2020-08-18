@@ -33,7 +33,8 @@ GcpEventsConvertFilterConfig::GcpEventsConvertFilterConfig(
 GcpEventsConvertFilter::GcpEventsConvertFilter(GcpEventsConvertFilterConfigSharedPtr config)
     : config_(config) {}
 
-GcpEventsConvertFilter::GcpEventsConvertFilter(GcpEventsConvertFilterConfigSharedPtr config, bool has_cloud_event)
+GcpEventsConvertFilter::GcpEventsConvertFilter(GcpEventsConvertFilterConfigSharedPtr config,
+                                               bool has_cloud_event)
     : has_cloud_event_(has_cloud_event), config_(config) {}
 
 void GcpEventsConvertFilter::onDestroy() {}
@@ -45,7 +46,7 @@ Http::FilterHeadersStatus GcpEventsConvertFilter::decodeHeaders(Http::RequestHea
     // we don't need to do any buffering
     return Http::FilterHeadersStatus::Continue;
   }
-  
+
   has_cloud_event_ = true;
   // store the current header for future usage
   request_headers_ = &headers;
@@ -59,7 +60,7 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
 
   // For any request body that is not the end of HTTP request and not empty
   // Buffer the current HTTP request's body
-  if (!end_stream) 
+  if (!end_stream)
     return Http::FilterDataStatus::StopIterationAndBuffer;
 
   if (decoder_callbacks_ == nullptr) {
@@ -76,7 +77,7 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
   ReceivedMessage received_message;
   Envoy::ProtobufUtil::JsonParseOptions parse_option;
   auto status = Envoy::ProtobufUtil::JsonStringToMessage(buffered->toString(), &received_message,
-                                                          parse_option);
+                                                         parse_option);
 
   if (!status.ok()) {
     // buffered data didn't successfully converted to proto. Continue
@@ -92,7 +93,7 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
   http_req.base().set("ce-type", "com.example.some_event");
   http_req.base().set("ce-time", "2020-03-10T03:56:24Z");
   http_req.body() = "certain body string text";
-  
+
   absl::Status update_status = updateHeader(http_req);
   if (!update_status.ok()) {
     ENVOY_LOG(warn, "Gcp Events Convert Filter log: update header {}", update_status.ToString());
@@ -123,7 +124,7 @@ bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers)
 
 absl::Status GcpEventsConvertFilter::updateHeader(const HttpRequest& http_req) {
   // TODO(#3): implement detail logic for update Header
-  for (auto it = http_req.base().begin() ; it != http_req.base().end() ; ++it) {
+  for (auto it = http_req.base().begin(); it != http_req.base().end(); ++it) {
     Http::LowerCaseString header_key((*it).name_string().to_string());
     std::string header_val = (*it).value().to_string();
     if (header_key == Http::LowerCaseString("content-type")) {

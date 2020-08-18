@@ -1,5 +1,6 @@
 #pragma once
 
+#include <boost/beast/http.hpp>
 #include <memory>
 #include <string>
 
@@ -7,8 +8,6 @@
 #include "envoy/server/filter_config.h"
 
 #include "common/common/logger.h"
-
-#include <boost/beast/http.hpp>
 
 namespace Envoy {
 namespace Extensions {

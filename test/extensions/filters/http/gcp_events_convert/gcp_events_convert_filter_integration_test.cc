@@ -94,12 +94,15 @@ TEST_P(GcpEventsConvertIntegrationTest, CloudEventNormalRequest) {
   // filter should replace body with given string
   ASSERT_EQ(request_stream->body().toString(), "certain body string text");
   auto& request_headers = request_stream->headers();
-  
+
   ASSERT_EQ("application/text", request_headers.getContentTypeValue());
-  ASSERT_EQ("1.0", request_headers.get(Http::LowerCaseString("ce-specversion"))->value().getStringView());
-  ASSERT_EQ("com.example.some_event", request_headers.get(Http::LowerCaseString("ce-type"))->value().getStringView());
-  ASSERT_EQ("2020-03-10T03:56:24Z", request_headers.get(Http::LowerCaseString("ce-time"))->value().getStringView());
-  
+  ASSERT_EQ("1.0",
+            request_headers.get(Http::LowerCaseString("ce-specversion"))->value().getStringView());
+  ASSERT_EQ("com.example.some_event",
+            request_headers.get(Http::LowerCaseString("ce-type"))->value().getStringView());
+  ASSERT_EQ("2020-03-10T03:56:24Z",
+            request_headers.get(Http::LowerCaseString("ce-time"))->value().getStringView());
+
   codec_client->close();
 }
 
@@ -164,7 +167,7 @@ TEST_P(GcpEventsConvertIntegrationTest, CloudEventPartialMissingRequest) {
   response->waitForEndStream();
   // filter should be pass through since filter can not convert partial json string to proto object
   ASSERT_EQ(request_stream->body().toString(), partial_json_string);
-  
+
   codec_client->close();
 }
 
