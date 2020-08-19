@@ -93,7 +93,7 @@ TEST_P(GcpEventsConvertIntegrationTest, CloudEventNormalRequest) {
   ASSERT_TRUE(request_stream->waitForEndStream(*dispatcher_));
   response->waitForEndStream();
   // filter should replace body with given string
-  EXPECT_EQ(request_stream->body().toString(), "certain body string text");
+  EXPECT_EQ("certain body string text", request_stream->body().toString());
   auto& request_headers = request_stream->headers();
   // filter should replace headers content-type with `ce-datecontenttype`
   EXPECT_EQ("application/text", request_headers.getContentTypeValue());
