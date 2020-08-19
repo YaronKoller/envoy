@@ -260,6 +260,9 @@ DEPENDENCY_REPOSITORIES_SPEC = dict(
         cpe = "N/A",
     ),
     com_github_nelhage_rules_boost = dict(
+        project_name = "Nelhage",
+        project_url = "https://github.com/nelhage/rules_boost",
+        version = "1e3a69bf2d5cd10c34b74f066054cd335d033d71",
         sha256 = "b3cbdceaa95b8cfe3a69ff37f8ad0e53a77937433234f6b9a6add2eff5bde333",
         strip_prefix = "rules_boost-1e3a69bf2d5cd10c34b74f066054cd335d033d71",
         urls = ["https://github.com/nelhage/rules_boost/archive/1e3a69bf2d5cd10c34b74f066054cd335d033d71.tar.gz"],
