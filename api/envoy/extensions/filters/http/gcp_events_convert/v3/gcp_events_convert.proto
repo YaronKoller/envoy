@@ -25,8 +25,4 @@ message GcpEventsConvert {
   // if content_type matches, trigger the functionality
   // else run as a pass-through
   string content_type = 1 [(validate.rules).string.min_bytes = 1];
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 99d0e327ab5aa69ade81f003d8e09f346872e883

@@ -22,6 +22,7 @@ def envoy_dependency_imports(go_version = GO_VERSION):
     apple_rules_dependencies()
     upb_bazel_version_repository(name = "upb_bazel_version")
     antlr_dependencies(471)
+    boost_deps()
 
     custom_exec_properties(
         name = "envoy_large_machine_exec_property",
@@ -54,4 +55,3 @@ def envoy_dependency_imports(go_version = GO_VERSION):
 
     config_validation_pip_install()
     protodoc_pip_install()
-    boost_deps()

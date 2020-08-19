@@ -427,9 +427,6 @@ cc_library(
 def _com_github_nelhage_rules_boost():
     _repository_impl("com_github_nelhage_rules_boost")
 
-def _com_github_nelhage_rules_boost():
-    _repository_impl("com_github_nelhage_rules_boost")
-
 def _com_github_nghttp2_nghttp2():
     location = _get_location("com_github_nghttp2_nghttp2")
     http_archive(
