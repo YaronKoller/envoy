@@ -96,7 +96,8 @@ TEST(GcpEventsConvertFilterUnitTest, DecodeDataWithCloudEvent) {
     EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter.decodeData(data, false));
   }
 
-  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter.decodeHeaders(headers, false));
+  Buffer::OwnedImpl data;
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter.decodeData(data, true));
 }
 
 TEST(GcpEventsConvertFilterUnitTest, DecodeDataWithRandomBody) {
