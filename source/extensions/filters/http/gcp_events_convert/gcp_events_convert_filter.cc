@@ -87,7 +87,7 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance&, boo
     return Http::FilterDataStatus::Continue;
   }
 
-  // TODO(#6): Use Cloud Event SDK to convert Pubsub Message to HTTP Binding
+  // TODO(#2): Step 5 & 6 Use Cloud Event SDK to convert Pubsub Message to HTTP Binding
   // HttpRequest http_req = Binder.bind(cloudevents);
   HttpRequest http_req;
   http_req.base().set("content-type", "application/text");
