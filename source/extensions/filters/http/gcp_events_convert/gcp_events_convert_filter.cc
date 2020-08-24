@@ -125,17 +125,11 @@ bool GcpEventsConvertFilter::isCloudEvent(const Http::RequestHeaderMap& headers)
 }
 
 absl::Status GcpEventsConvertFilter::updateHeader(const HttpRequest& http_req) {
-<<<<<<< HEAD
   for (const auto& header : http_req.base()) {
     Http::LowerCaseString header_key(header.name_string().to_string());
     // avoid deep copy from boost string_view to absl string_view
     // only copy the @pointer data() , @length size()
     absl::string_view header_val(header.value().data(), header.value().size());
-=======
-  for (auto it = http_req.base().begin(); it != http_req.base().end(); ++it) {
-    Http::LowerCaseString header_key((*it).name_string().to_string());
-    std::string header_val = (*it).value().to_string();
->>>>>>> 6088ba1db (change PR number to #6)
     if (header_key == Http::LowerCaseString("content-type")) {
       request_headers_->setContentType(header_val);
     } else {
