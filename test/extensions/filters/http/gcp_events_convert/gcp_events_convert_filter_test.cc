@@ -78,12 +78,13 @@ TEST(GcpEventsConvertFilterUnitTest, DecodeDataWithCloudEvent) {
   EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter.decodeData(data, false));
 }
 
-
 TEST(GcpEventsConvertFilterUnitTest, DecodeDataWithCloudEventEndOfStream) {
   envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert proto_config;
   proto_config.set_content_type("application/grpc+cloudevent+json");
+  Http::TestRequestHeaderMapImpl headers;
   GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(proto_config),
-                                /*has_cloud_event=*/true);
+                                /*has_cloud_event=*/true,
+                                /*headers=*/&headers);
   Http::MockStreamDecoderFilterCallbacks callbacks;
   filter.setDecoderFilterCallbacks(callbacks);
 
@@ -125,7 +126,7 @@ TEST(GcpEventsConvertFilterUnitTest, DecodeDataWithCloudEventEndOfStream) {
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter.decodeData(data, true));
 
   // filter should replace body with given string
-  EXPECT_EQ(buffer.toString(), "certain body string text");
+  EXPECT_EQ("certain body string text", buffer.toString());
   // filter should replace headers content-type with `ce-datecontenttype`
   EXPECT_EQ("application/text", headers.getContentTypeValue());
   // filter should insert ce attribute into header (except for `ce-datacontenttype`)
