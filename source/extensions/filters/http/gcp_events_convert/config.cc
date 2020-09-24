@@ -23,7 +23,7 @@ Http::FilterFactoryCb GcpEventsConvertFilterFactory::createFilterFactoryFromProt
       std::make_shared<GcpEventsConvertFilterConfig>(proto_config);
 
   return [config](Http::FilterChainFactoryCallbacks& callbacks) -> void {
-    callbacks.addStreamDecoderFilter(std::make_shared<GcpEventsConvertFilter>(config));
+    callbacks.addStreamFilter(std::make_shared<GcpEventsConvertFilter>(config));
   };
 }
 

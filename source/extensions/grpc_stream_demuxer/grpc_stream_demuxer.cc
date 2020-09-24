@@ -9,8 +9,8 @@ ReceivedMessageServiceClient::ReceivedMessageServiceClient(std::shared_ptr<Chann
 
 // Assembles the client's payload, sends it and presents the response back
 // from the server.
-std::string ReceivedMessageServiceClient::SendReceivedMessage(const ReceivedMessage &request) {
-  google::protobuf::Empty reply;
+Envoy::StatusOr<std::string> ReceivedMessageServiceClient::SendReceivedMessage(const ReceivedMessage &request) {
+  Ack reply;
   // Context for the client. It could be used to convey extra information to
   // the server and/or tweak certain RPC behaviors.
   ClientContext context;
@@ -20,10 +20,10 @@ std::string ReceivedMessageServiceClient::SendReceivedMessage(const ReceivedMess
 
   // Act upon its status.
   if (status.ok()) {
-    return "RPC worked";
+    return reply.ack_id();
   } else {
     std::cout << status.error_code() << ": " << status.error_message() << std::endl;
-    return "RPC failed";
+    return absl::Status(absl::StatusCode::kAborted, status.error_message());
   }
 }
 	
@@ -65,9 +65,12 @@ void GrpcStreamDemuxer::start() {
       // Send the message using a unary grpc request.
       std::string target_uri = address_ + ":" + std::to_string(port_);
       ReceivedMessageServiceClient client(grpc::CreateChannel(target_uri, grpc::InsecureChannelCredentials()));
-      std::string reply = client.SendReceivedMessage(message);
-      ENVOY_LOG(info, "Unary request response: {}", reply);
-      ack_request.add_ack_ids(message.ack_id());
+      Envoy::StatusOr<std::string> reply = client.SendReceivedMessage(message);
+      if (reply.ok()){
+        ack_request.add_ack_ids(reply.value());
+      } else {
+        ENVOY_LOG(info, "Unary request response: {}", reply.status());
+      }
     }
     stream->Write(ack_request);
   }  

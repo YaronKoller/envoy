@@ -31,6 +31,7 @@ envoy_cc_library(
         "@com_github_cloudevents_sdk//v1/protocol_binding:pubsub_binder_lib",
         "@com_google_googleapis//google/pubsub/v1:pubsub_cc_proto",
         "@envoy_api//envoy/extensions/filters/http/gcp_events_convert/v3:pkg_cc_proto",
+        "@envoy_api//envoy/service/pubsub/v3alpha:pkg_cc_grpc",
     ],
 )
 

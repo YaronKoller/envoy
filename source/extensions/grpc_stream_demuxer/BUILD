@@ -16,6 +16,7 @@ envoy_cc_library(
     deps = [
 	    "//include/envoy/event:dispatcher_interface",
         "//source/common/common:minimal_logger_lib",
+        "//source/common/common:statusor_lib",
         "@com_google_googleapis//google/pubsub/v1:pubsub_cc_grpc",
         "@com_github_grpc_grpc//:grpc++",
         "@envoy_api//envoy/service/pubsub/v3alpha:pkg_cc_grpc",

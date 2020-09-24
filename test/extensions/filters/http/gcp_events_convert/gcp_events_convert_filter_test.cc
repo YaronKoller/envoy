@@ -2,6 +2,7 @@
 
 #include "envoy/event/dispatcher.h"
 #include "envoy/extensions/filters/http/gcp_events_convert/v3/gcp_events_convert.pb.h"
+#include "envoy/service/pubsub/v3alpha/received_message.grpc.pb.h"
 
 #include "common/http/header_map_impl.h"
 #include "common/protobuf/utility.h"
@@ -19,6 +20,7 @@
 #include "google/pubsub/v1/pubsub.pb.h"
 #include "gtest/gtest.h"
 
+using envoy::service::pubsub::v3alpha::Ack;
 using google::pubsub::v1::PubsubMessage;
 using google::pubsub::v1::ReceivedMessage;
 
@@ -214,6 +216,151 @@ TEST(GcpEventsConvertFilterUnitTest, DecodeDataWithRandomBody) {
 
   Buffer::OwnedImpl data2;
   EXPECT_EQ(Http::FilterDataStatus::Continue, filter.decodeData(data2, true));
+}
+
+// Unit test for Encode Headers
+TEST(GcpEventsConvertFilterUnitTest, EncoderHeaderNoCloudEvent) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert config;
+  config.set_content_type("application/grpc+cloudevent+json");
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(config),
+                                /*has_cloud_event=*/false,
+                                /*headers =*/nullptr);
+  Http::TestResponseHeaderMapImpl headers(
+      {{"content-type", "application/html"}, {"content-length", "100"}});
+
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter.encodeHeaders(headers, false));
+}
+
+TEST(GcpEventsConvertFilterUnitTest, EncoderHeaderCloudEventStatus200) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert config;
+  config.set_content_type("application/grpc+cloudevent+json");
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(config),
+                                /*has_cloud_event=*/true,
+                                /*ack_id=*/"ack id string",
+                                /*acked=*/true);
+  Http::TestResponseHeaderMapImpl headers(
+      {{":status", "200"}, {"content-type", "application/html"}, {"content-length", "100"}});
+
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter.encodeHeaders(headers, false));
+  // filter should replace headers content-type with the content type user specified
+  EXPECT_EQ("application/grpc+cloudevent+json", headers.getContentTypeValue());
+}
+
+TEST(GcpEventsConvertFilterUnitTest, EncoderHeaderCloudEventStatus404) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert config;
+  config.set_content_type("application/grpc+cloudevent+json");
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(config),
+                                /*has_cloud_event=*/true,
+                                /*ack_id=*/"ack id string",
+                                /*acked=*/true);
+  Http::TestResponseHeaderMapImpl headers(
+      {{":status", "404"}, {"content-type", "application/html"}, {"content-length", "100"}});
+
+  EXPECT_EQ(Http::FilterHeadersStatus::Continue, filter.encodeHeaders(headers, false));
+  // filter should replace headers content-type with the content type user specified
+  EXPECT_EQ("application/html", headers.getContentTypeValue());
+}
+
+// Unit test for Encode Data
+TEST(GcpEventsConvertFilterUnitTest, EncodeDataStatus200NotEndStream) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert proto_config;
+  proto_config.set_content_type("application/grpc+cloudevent+json");
+  Http::TestRequestHeaderMapImpl headers;
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(proto_config),
+                                /*has_cloud_event=*/true,
+                                /*ack_id=*/"ack id string",
+                                /*acked=*/true);
+
+  Buffer::OwnedImpl data;
+  EXPECT_EQ(Http::FilterDataStatus::StopIterationAndBuffer, filter.encodeData(data, false));
+}
+
+TEST(GcpEventsConvertFilterUnitTest, EncodeDataStatus200EndStreamDecodingBuffer) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert proto_config;
+  proto_config.set_content_type("application/grpc+cloudevent+json");
+  Http::TestRequestHeaderMapImpl headers;
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(proto_config),
+                                /*has_cloud_event=*/true,
+                                /*ack_id=*/"ack id string",
+                                /*acked=*/true);
+  Http::MockStreamEncoderFilterCallbacks callbacks;
+  filter.setEncoderFilterCallbacks(callbacks);
+
+  Buffer::OwnedImpl buffer;
+  EXPECT_CALL(callbacks, encodingBuffer).Times(1).WillOnce(testing::Return(&buffer));
+  EXPECT_CALL(callbacks, modifyEncodingBuffer)
+      .Times(1)
+      .WillOnce([&buffer](std::function<void(Buffer::Instance&)> callback) {
+        // callback is the callback function parameter used to manipulate buffered data
+        // in our use case, we run the lambda function to manipulate buffered data manually
+        callback(buffer);
+      });
+
+  Buffer::OwnedImpl data;
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter.encodeData(data, true));
+
+  std::string proto_string;
+  Ack ack;
+  ack.set_ack_id("ack id string");
+  bool status = ack.SerializeToString(&proto_string);
+  ASSERT_TRUE(status);
+
+  // filter should replace body with ack proto format string
+  EXPECT_EQ(proto_string, buffer.toString());
+  EXPECT_EQ("", data.toString());
+}
+
+TEST(GcpEventsConvertFilterUnitTest, EncodeDataStatus200EndStreamLastData) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert proto_config;
+  proto_config.set_content_type("application/grpc+cloudevent+json");
+
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(proto_config),
+                                /*has_cloud_event=*/true,
+                                /*ack_id=*/"ack id string",
+                                /*acked=*/true);
+  Http::MockStreamEncoderFilterCallbacks callbacks;
+  filter.setEncoderFilterCallbacks(callbacks);
+
+  EXPECT_CALL(callbacks, encodingBuffer).Times(1).WillOnce(testing::Return(nullptr));
+  EXPECT_CALL(callbacks, modifyEncodingBuffer).Times(0);
+
+  Buffer::OwnedImpl data;
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter.encodeData(data, true));
+
+  std::string proto_string;
+  Ack ack;
+  ack.set_ack_id("ack id string");
+  bool status = ack.SerializeToString(&proto_string);
+  ASSERT_TRUE(status);
+
+  // filter should replace body with ack proto format string
+  EXPECT_EQ(proto_string, data.toString());
+}
+
+TEST(GcpEventsConvertFilterUnitTest, EncodeDataStatusNot200) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert proto_config;
+  proto_config.set_content_type("application/grpc+cloudevent+json");
+
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(proto_config),
+                                /*has_cloud_event=*/true,
+                                /*ack_id=*/"ack id string",
+                                /*acked=*/false);
+
+  Buffer::OwnedImpl data;
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter.encodeData(data, true));
+}
+
+TEST(GcpEventsConvertFilterUnitTest, EncodeDataNoCloudEvent) {
+  envoy::extensions::filters::http::gcp_events_convert::v3::GcpEventsConvert proto_config;
+  proto_config.set_content_type("application/grpc+cloudevent+json");
+
+  GcpEventsConvertFilter filter(std::make_shared<GcpEventsConvertFilterConfig>(proto_config),
+                                /*has_cloud_event=*/false,
+                                /*ack_id=*/"random string",
+                                /*acked=*/true);
+
+  Buffer::OwnedImpl data;
+  EXPECT_EQ(Http::FilterDataStatus::Continue, filter.encodeData(data, true));
 }
 
 } // namespace GcpEventsConvert

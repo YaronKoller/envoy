@@ -6,6 +6,7 @@
 #include "envoy/extensions/filters/http/gcp_events_convert/v3/gcp_events_convert.pb.h"
 #include "envoy/http/filter.h"
 #include "envoy/server/filter_config.h"
+#include "envoy/service/pubsub/v3alpha/received_message.grpc.pb.h"
 
 #include "common/buffer/buffer_impl.h"
 #include "common/common/cleanup.h"
@@ -25,6 +26,7 @@ namespace Extensions {
 namespace HttpFilters {
 namespace GcpEventsConvert {
 
+using envoy::service::pubsub::v3alpha::Ack;
 using google::pubsub::v1::PubsubMessage;
 using google::pubsub::v1::ReceivedMessage;
 using io::cloudevents::v1::CloudEvent;
@@ -41,6 +43,12 @@ GcpEventsConvertFilter::GcpEventsConvertFilter(GcpEventsConvertFilterConfigShare
                                                bool has_cloud_event,
                                                Http::RequestHeaderMap* headers)
     : request_headers_(headers), has_cloud_event_(has_cloud_event), config_(config) {}
+
+GcpEventsConvertFilter::GcpEventsConvertFilter(GcpEventsConvertFilterConfigSharedPtr config,
+                                               bool has_cloud_event,
+                                               std::string ack_id,
+                                               bool acked)
+    : ack_id_(ack_id), acked_(acked), has_cloud_event_(has_cloud_event), config_(config) {}
 
 void GcpEventsConvertFilter::onDestroy() {}
 
@@ -63,6 +71,8 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance& buff
   if (!has_cloud_event_)
     return Http::FilterDataStatus::Continue;
 
+  has_cloud_event_ = false;
+
   // For any request body that is not the end of HTTP request and not empty
   // Buffer the current HTTP request's body
   if (!end_stream)
@@ -84,6 +94,8 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance& buff
     return Http::FilterDataStatus::Continue;
   }
 
+  ack_id_ = received_message.ack_id();
+
   const PubsubMessage& pubsub_message = received_message.message();
   cloudevents::binding::PubsubBinder pubsub_binder;
 
@@ -104,6 +116,7 @@ Http::FilterDataStatus GcpEventsConvertFilter::decodeData(Buffer::Instance& buff
   updateHeader(*req);
   updateBody(*req, buffer);
 
+  has_cloud_event_ = true;
   return Http::FilterDataStatus::Continue;
 }
 
@@ -114,6 +127,59 @@ Http::FilterTrailersStatus GcpEventsConvertFilter::decodeTrailers(Http::RequestT
 void GcpEventsConvertFilter::setDecoderFilterCallbacks(
     Http::StreamDecoderFilterCallbacks& callbacks) {
   decoder_callbacks_ = &callbacks;
+}
+
+Http::FilterHeadersStatus GcpEventsConvertFilter::encodeHeaders(Http::ResponseHeaderMap& headers,
+                                                                bool) {
+  // for any requst header that is not related to cloud event. Pass through
+  if (!has_cloud_event_) 
+    return Http::FilterHeadersStatus::Continue;
+
+  uint64_t status;
+  if (!absl::SimpleAtoi(headers.getStatusValue(), &status) || status != 200) {
+    // invalid code, not acknowledged
+    ENVOY_LOG(warn, "Gcp Events Convert Filter log: upstream response with status {}", headers.getStatusValue());
+    return Http::FilterHeadersStatus::Continue;
+  }
+
+  headers.setContentType(config_->content_type_);
+  acked_ = true;
+
+  return Http::FilterHeadersStatus::Continue;
+}
+
+Http::FilterDataStatus GcpEventsConvertFilter::encodeData(Buffer::Instance& buffer, bool end_stream) {
+  // for any requst body that is not related to cloud event or status code is not 200. Pass through
+  if (!has_cloud_event_ || !acked_) 
+    return Http::FilterDataStatus::Continue;
+
+  if (!end_stream) 
+    return Http::FilterDataStatus::StopIterationAndBuffer;
+
+  Ack ack;
+  ack.set_ack_id(ack_id_);
+  std::string proto_string;
+  ack.SerializeToString(&proto_string);
+
+  buffer.drain(buffer.length());
+  if (encoder_callbacks_ == nullptr || encoder_callbacks_->encodingBuffer() == nullptr) {
+    buffer.add(proto_string);
+  } else {
+    encoder_callbacks_->modifyEncodingBuffer([&proto_string](Buffer::Instance& buffered){
+      buffered.drain(buffered.length());
+      buffered.add(proto_string);
+    });
+  }
+
+  return Http::FilterDataStatus::Continue;
+}
+
+Http::FilterTrailersStatus GcpEventsConvertFilter::encodeTrailers(Http::ResponseTrailerMap&) {
+  return Http::FilterTrailersStatus::Continue;
+}
+
+void GcpEventsConvertFilter::setEncoderFilterCallbacks(Http::StreamEncoderFilterCallbacks& callbacks) {
+  encoder_callbacks_ = &callbacks;
 }
 
 std::string GcpEventsConvertFilter::buildBody(const Buffer::Instance* buffered,

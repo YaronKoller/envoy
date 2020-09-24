@@ -4,6 +4,7 @@
 #include "envoy/service/pubsub/v3alpha/received_message.grpc.pb.h"
 
 #include "common/common/logger.h"
+#include "common/common/statusor.h"
 
 #include "google/pubsub/v1/pubsub.grpc.pb.h"
 #include "grpc++/grpc++.h"
@@ -16,6 +17,7 @@ using google::pubsub::v1::Subscriber;
 using google::pubsub::v1::StreamingPullRequest;
 using google::pubsub::v1::StreamingPullResponse;
 using google::pubsub::v1::ReceivedMessage;
+using envoy::service::pubsub::v3alpha::Ack;
 using envoy::service::pubsub::v3alpha::ReceivedMessageService;
 
 namespace Envoy {
@@ -26,7 +28,7 @@ class ReceivedMessageServiceClient {
   public:
     ReceivedMessageServiceClient(std::shared_ptr<Channel> channel);
 
-    std::string SendReceivedMessage(const ReceivedMessage &request);
+    Envoy::StatusOr<std::string> SendReceivedMessage(const ReceivedMessage &request);
     
   private:
     std::unique_ptr<ReceivedMessageService::Stub> stub_;

@@ -30,6 +30,7 @@ envoy_extension_cc_test(
         "//test/test_common:test_runtime_lib",
         "@com_google_googleapis//google/pubsub/v1:pubsub_cc_proto",
         "@envoy_api//envoy/extensions/filters/http/gcp_events_convert/v3:pkg_cc_proto",
+        "@envoy_api//envoy/service/pubsub/v3alpha:pkg_cc_grpc",
     ],
 )
 
